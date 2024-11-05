@@ -1,15 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flask App</title>
+    <title>TradesyAI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="container">
-        <h1>Welcome to My Simple Flask App!</h1>
-        <p>This is a simple UI built with Flask.</p>
+        <h1>TradesyAI</h1>
+        <div class="inputsliders" <div class="slidecontainer">
+            <h3>Risk Tolerance: </h3>
+            <input type="range" min="1" max="10" value="5" class="slider" id="sldr" name="risk_tolerance">
+            <p><span id="sliderValue">5</span></p>
+        </div>
+        <div class="lengthofinvestment">
+            <label for="investmentlength">Choose a timeframe of interest for your investment</label>
+            <select name="length" id="lenth">
+                <option value="day">1 Day</option>
+                <option value="week">1 Week</option>
+                <option value="1mos">1 Month</option>
+                <option value="6mos">6 Month</option>
+            </select>
+        </div>
+
+
+        <div class="chatbot">
+            <!-- The Form -->
+            <form method="POST">
+                <label for="chatbox">Enter something:</label>
+                <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI" rows="4" cols="50"></textarea>
+                <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
+                <!-- Hidden input for slider value -->
+                <button type="submit">Submit</button>
+            </form>
+
+            {% if chat_response %}
+            <h2>ChatGPT's Response:</h2>
+            <p>{{ chat_response }}</p>
+            {% endif %}
+        </div>
     </div>
+
+    <script>
+        // Get slider and value display elements
+        const slider = document.getElementById('sldr');
+        const sliderValue = document.getElementById('sliderValue');
+        const riskToleranceInput = document.getElementById('risk_tolerance_value');
+
+        // Update the displayed value as the slider moves
+        slider.addEventListener('input', function () {
+            sliderValue.textContent = slider.value;
+            riskToleranceInput.value = slider.value;  // Update the hidden input value
+        });
+    </script>
 </body>
+
 </html>
