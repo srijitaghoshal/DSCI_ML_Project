@@ -92,6 +92,70 @@ def print_candles(df):
     fig.update_layout(width=1200, height=800)
     fig.show()
 
+import pandas as pd
+import yfinance as yf
+import pandas_ta as ta
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense
+
+def import_data(stock, startDate):
+    data = yf.download(stock, start=startDate, interval='1d')
+    data.columns = data.columns.get_level_values(0)
+    data['EMA_50'] = ta.ema(data['Close'], length=50)
+    data['EMA_200'] = ta.ema(data['Close'], length=200)
+    data['SMA_50'] = ta.sma(data['Close'], length=50)
+    data['SMA_200'] = ta.sma(data['Close'], length=200)
+    data['RSI'] = ta.rsi(data['Close'], length=14)
+    data['Pct_Change_5D'] = data['Close'].pct_change(periods=5).shift(-5)  # Percent change over 5 days
+    data.dropna(inplace=True)  # Remove any rows with NaN values
+    return data
+
+def prepare_lstm_data(data, feature_columns, target_column, time_steps=60):
+    X = []
+    Y = []
+    for i in range(time_steps, len(data) - 5):  # Ensure we have future data for Y
+        X.append(data[feature_columns].iloc[i - time_steps:i].values)
+        Y.append(data[target_column].iloc[i])
+    return np.array(X), np.array(Y)
+
+def build_training_data():
+    sp500_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    sp500_table = pd.read_html(sp500_url)
+    TICKERS = sp500_table[0]['Symbol'].tolist()
+
+    # Select a subset for faster testing
+    TICKERS = TICKERS[:10]  # Adjust as needed
+
+    # Prepare data for training
+    feature_columns = ['Close', 'EMA_50', 'EMA_200', 'SMA_50', 'SMA_200', 'RSI']
+    X_train = []
+    Y_train = []
+    X_test = []
+    Y_test = []
+    time_steps = 60  # Number of time steps for LSTM
+    scaler = MinMaxScaler()
+
+    for ticker in TICKERS:
+        # print(f"Processing {ticker}...")
+        try:
+            data = import_data(ticker, startDate='2023-01-01')
+            data[feature_columns] = scaler.fit_transform(data[feature_columns])
+            X, Y = prepare_lstm_data(data, feature_columns, 'Pct_Change_5D', time_steps)
+            if len(X) > 0 and len(Y) > 0:
+                length = len(X)
+                index = 0.8*length
+                X_train.extend(X[:index])
+                Y_train.extend(Y[:index])
+                X_test.extend(X[index:])
+                Y_test.extend(Y[index:])
+
+        except Exception as e:
+            print(f"Skipping {ticker} due to an error: {e}")
+
+    X_train = np.array(X_train)
+    Y_train = np.array(Y_train)
+
 def build_and_train_model(X_train, y_train):
     model = Sequential([
         LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),
