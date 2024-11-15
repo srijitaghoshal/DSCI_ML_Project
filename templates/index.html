@@ -1,61 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TradesyAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
     <div class="container">
         <h1>TradesyAI</h1>
-        <div class="inputsliders" <div class="slidecontainer">
-            <h3>Risk Tolerance: </h3>
+        <div class="slidecontainer">
+            <h3>Risk Tolerance:</h3>
+            <span id="sliderValue">5</span>
             <input type="range" min="1" max="10" value="5" class="slider" id="sldr" name="risk_tolerance">
-            <p><span id="sliderValue">5</span></p>
         </div>
         <div class="lengthofinvestment">
-            <label for="investmentlength">Choose a timeframe of interest for your investment</label>
-            <select name="length" id="lenth">
+            <label for="investmentlength">Choose a timeframe:</label>
+            <select name="length" id="length">
                 <option value="day">1 Day</option>
                 <option value="week">1 Week</option>
                 <option value="1mos">1 Month</option>
-                <option value="6mos">6 Month</option>
+                <option value="6mos">6 Months</option>
             </select>
         </div>
 
-
-        <div class="chatbot">
-            <!-- The Form -->
-            <form method="POST">
-                <label for="chatbox">Enter something:</label>
-                <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI" rows="4" cols="50"></textarea>
-                <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
-                <!-- Hidden input for slider value -->
-                <button type="submit">Submit</button>
-            </form>
-
+        <!-- Chat Area for Messages -->
+        <div class="chat-area">
+            <!-- User Messages -->
             {% if chat_response %}
-            <h2>ChatGPT's Response:</h2>
-            <p>{{ chat_response }}</p>
+                <div class="chat-response">
+                    <p>{{ chat_response }}</p>
+                </div>
             {% endif %}
         </div>
+
+        <!-- User Input Form -->
+        <form method="POST" class="user-input-form" id="chatForm">
+            <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
+            <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
+            <button type="submit">Submit</button>
+        </form>
     </div>
+    <footer class="footer">
+        © 2024 <a href="#">TradesyAI</a>. All rights reserved.
+    </footer>
 
     <script>
-        // Get slider and value display elements
+        // JavaScript for handling the slider and chat
         const slider = document.getElementById('sldr');
         const sliderValue = document.getElementById('sliderValue');
         const riskToleranceInput = document.getElementById('risk_tolerance_value');
+        const chatForm = document.getElementById('chatForm');
+        const chatbox = document.getElementById('chatbox');
+        const chatArea = document.querySelector('.chat-area');
 
-        // Update the displayed value as the slider moves
         slider.addEventListener('input', function () {
             sliderValue.textContent = slider.value;
-            riskToleranceInput.value = slider.value;  // Update the hidden input value
+            riskToleranceInput.value = slider.value;
+        });
+
+        chatForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const userInput = chatbox.value.trim();
+            if (userInput) {
+                const userMessage = document.createElement('div');
+                userMessage.classList.add('user-message');
+                userMessage.textContent = userInput;
+
+                chatArea.appendChild(userMessage);
+                chatbox.value = '';
+            }
         });
     </script>
 </body>
-
 </html>
