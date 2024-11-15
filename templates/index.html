@@ -30,7 +30,7 @@
             <!-- User Messages -->
             {% if chat_response %}
                 <div class="chat-response">
-                    <p>{{ chat_response }}</p>
+                    <p>{{ chat_response | safe }}</p> <!-- Use the 'safe' filter here -->
                 </div>
             {% endif %}
         </div>
@@ -54,23 +54,47 @@
         const chatForm = document.getElementById('chatForm');
         const chatbox = document.getElementById('chatbox');
         const chatArea = document.querySelector('.chat-area');
-
+    
         slider.addEventListener('input', function () {
             sliderValue.textContent = slider.value;
             riskToleranceInput.value = slider.value;
         });
-
-        chatForm.addEventListener('submit', function (event) {
+    
+        chatForm.addEventListener('submit', async function (event) {
             event.preventDefault();
-
+    
             const userInput = chatbox.value.trim();
             if (userInput) {
                 const userMessage = document.createElement('div');
                 userMessage.classList.add('user-message');
                 userMessage.textContent = userInput;
-
                 chatArea.appendChild(userMessage);
                 chatbox.value = '';
+    
+                // Fetch the response from the server
+                try {
+                    const response = await fetch('/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            user_input: userInput,
+                            risk_tolerance: riskToleranceInput.value
+                        })
+                    });
+    
+                    const text = await response.text();
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(text, 'text/html');
+                    const chatResponse = doc.querySelector('.chat-response');
+    
+                    if (chatResponse) {
+                        chatArea.appendChild(chatResponse);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             }
         });
     </script>
