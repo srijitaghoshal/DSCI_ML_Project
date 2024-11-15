@@ -169,14 +169,17 @@ def build_and_train_model(X_train, y_train):
     model.fit(X_train, y_train, epochs=50, batch_size=16, validation_split=0.2)
     return model
 
-def predict_best(tickers):
+def predict_and_decide(tickers, buy):
+    # Ensure tickers is a numpy array
+    tickers = np.array(tickers)
+    
     # Prepare training data
     X_train, y_train = build_training_data(tickers)
     
     # Check if training data is prepared
     if len(X_train) == 0 or len(y_train) == 0:
-        print("Training data is empty. Ensure the tickers list is valid and data was processed correctly.")
-        return []
+        print("Training data is empty. Ensure the tickers array is valid and data was processed correctly.")
+        return np.array([])
 
     # Build and train the model
     model = build_and_train_model(X_train, y_train)
@@ -184,52 +187,20 @@ def predict_best(tickers):
     # Initialize a list to store the results
     predictions = []
 
-    for ticker in tickers:
-        try:
-            # Import and preprocess current data for the given ticker
-            data = import_data(ticker, startDate='2023-01-01')
-            scaler = MinMaxScaler()
-            feature_columns = ['Close', 'EMA_50', 'EMA_200', 'SMA_50', 'SMA_200', 'RSI']
-            data[feature_columns] = scaler.fit_transform(data[feature_columns])
-            
-            # Prepare the last `time_steps` data points for prediction
-            last_data = data[feature_columns].iloc[-60:].values.reshape(1, 60, len(feature_columns))
-            
-            # Make prediction for the current day
-            prediction = model.predict(last_data)
-            
-            # Append the ticker and its predicted change to the list
-            predictions.append((ticker, prediction[0][0]))
-
-        except Exception as e:
-            print(f"Skipping {ticker} due to an error: {e}")
-    
-    # Sort predictions by predicted price change in descending order and get the top 5
+    # Sort predictions by predicted price change in descending order
     predictions.sort(key=lambda x: x[1], reverse=True)
-    top_5_predictions = predictions[:5]
-
-    return top_5_predictions
-
     
-def buy_or_sell(buy, tickers, y_pred):
-    # Ensure y_pred is a flattened numpy array
-    y_pred = np.array(y_pred).flatten()
+    # Extract tickers and predictions into separate arrays
+    sorted_tickers = np.array([item[0] for item in predictions])
+    y_pred = np.array([item[1] for item in predictions])
     
-    # Ensure tickers and y_pred have the same length
-    if len(tickers) != len(y_pred):
-        raise ValueError("tickers and y_pred must have the same length.")
-    
-    # Generate buy and sell signals
-    buy_signals = y_pred > 0  # Buy if predicted change > 0
-    sell_signals = y_pred <= 0  # Sell if predicted change <= 0
-    
-    # Choose tickers based on the buy flag
+    # Generate buy or sell signals based on the buy flag
     if buy:
-        pred_tickers = np.array(tickers)[buy_signals]
+        selected_tickers = sorted_tickers[y_pred > 0]  # Buy if predicted change > 0
     else:
-        pred_tickers = np.array(tickers)[sell_signals]
-    
-    return pred_tickers
+        selected_tickers = sorted_tickers[y_pred <= 0]  # Sell if predicted change <= 0
+
+    return selected_tickers
     
 # Run the Flask app
 if __name__ == '__main__':
