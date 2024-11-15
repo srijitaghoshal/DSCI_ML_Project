@@ -71,6 +71,27 @@ def home():
 
     return render_template('index.html', chat_response=chat_response)
 
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+def print_candles(df):
+    # Create a figure with two rows for subplots
+    fig = make_subplots(rows=1, cols=1, shared_xaxes=True, 
+                        vertical_spacing=0.3, 
+                        row_heights=[0.7],
+                        subplot_titles=("Candlestick Chart"))
+
+    # Candlestick chart
+    fig.add_trace(go.Candlestick(x=df.index,
+                                 open=df['Open'],
+                                 high=df['High'],
+                                 low=df['Low'],
+                                 close=df['Close']),
+                  row=1, col=1)
+    
+    fig.update_layout(width=1200, height=800)
+    fig.show()
+
 # Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
