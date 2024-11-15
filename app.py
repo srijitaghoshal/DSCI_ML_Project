@@ -210,6 +210,27 @@ def predict_best(tickers):
 
     return top_5_predictions
 
+    
+def buy_or_sell(buy, tickers, y_pred):
+    # Ensure y_pred is a flattened numpy array
+    y_pred = np.array(y_pred).flatten()
+    
+    # Ensure tickers and y_pred have the same length
+    if len(tickers) != len(y_pred):
+        raise ValueError("tickers and y_pred must have the same length.")
+    
+    # Generate buy and sell signals
+    buy_signals = y_pred > 0  # Buy if predicted change > 0
+    sell_signals = y_pred <= 0  # Sell if predicted change <= 0
+    
+    # Choose tickers based on the buy flag
+    if buy:
+        pred_tickers = np.array(tickers)[buy_signals]
+    else:
+        pred_tickers = np.array(tickers)[sell_signals]
+    
+    return pred_tickers
+    
 # Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
