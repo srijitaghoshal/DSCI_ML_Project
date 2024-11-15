@@ -71,6 +71,7 @@ def home():
 
     return render_template('index.html', chat_response=chat_response)
 
+# Plotting function for candlestick patterns
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -95,11 +96,12 @@ def print_candles(df):
 import pandas as pd
 import yfinance as yf
 import pandas_ta as ta
+import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
 
-def import_data(stock, startDate):
+def import_data(stock, startDate, timeframe):
     data = yf.download(stock, start=startDate, interval='1d')
     data.columns = data.columns.get_level_values(0)
     data['EMA_50'] = ta.ema(data['Close'], length=50)
@@ -107,7 +109,7 @@ def import_data(stock, startDate):
     data['SMA_50'] = ta.sma(data['Close'], length=50)
     data['SMA_200'] = ta.sma(data['Close'], length=200)
     data['RSI'] = ta.rsi(data['Close'], length=14)
-    data['Pct_Change_5D'] = data['Close'].pct_change(periods=5).shift(-5)  # Percent change over 5 days
+    data['Pct_Change'] = data['Close'].pct_change(periods=timeframe).shift(-timeframe)  # Percent change over 5 days
     data.dropna(inplace=True)  # Remove any rows with NaN values
     return data
 
@@ -119,13 +121,13 @@ def prepare_lstm_data(data, feature_columns, target_column, time_steps=60):
         Y.append(data[target_column].iloc[i])
     return np.array(X), np.array(Y)
 
-def build_training_data():
-    sp500_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
-    sp500_table = pd.read_html(sp500_url)
-    TICKERS = sp500_table[0]['Symbol'].tolist()
+def build_training_data(TICKERS):
+    # sp500_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+    # sp500_table = pd.read_html(sp500_url)
+    # TICKERS = sp500_table[0]['Symbol'].tolist()
 
-    # Select a subset for faster testing
-    TICKERS = TICKERS[:10]  # Adjust as needed
+    # # Select a subset for faster testing
+    # TICKERS = TICKERS[:10]  # Adjust as needed
 
     # Prepare data for training
     feature_columns = ['Close', 'EMA_50', 'EMA_200', 'SMA_50', 'SMA_200', 'RSI']
@@ -141,7 +143,7 @@ def build_training_data():
         try:
             data = import_data(ticker, startDate='2023-01-01')
             data[feature_columns] = scaler.fit_transform(data[feature_columns])
-            X, Y = prepare_lstm_data(data, feature_columns, 'Pct_Change_5D', time_steps)
+            X, Y = prepare_lstm_data(data, feature_columns, 'Pct_Change', time_steps)
             if len(X) > 0 and len(Y) > 0:
                 length = len(X)
                 index = 0.8*length
@@ -166,6 +168,47 @@ def build_and_train_model(X_train, y_train):
     model.compile(optimizer='adam', loss='mse')
     model.fit(X_train, y_train, epochs=50, batch_size=16, validation_split=0.2)
     return model
+
+def predict_best(tickers):
+    # Prepare training data
+    X_train, y_train = build_training_data(tickers)
+    
+    # Check if training data is prepared
+    if len(X_train) == 0 or len(y_train) == 0:
+        print("Training data is empty. Ensure the tickers list is valid and data was processed correctly.")
+        return []
+
+    # Build and train the model
+    model = build_and_train_model(X_train, y_train)
+
+    # Initialize a list to store the results
+    predictions = []
+
+    for ticker in tickers:
+        try:
+            # Import and preprocess current data for the given ticker
+            data = import_data(ticker, startDate='2023-01-01')
+            scaler = MinMaxScaler()
+            feature_columns = ['Close', 'EMA_50', 'EMA_200', 'SMA_50', 'SMA_200', 'RSI']
+            data[feature_columns] = scaler.fit_transform(data[feature_columns])
+            
+            # Prepare the last `time_steps` data points for prediction
+            last_data = data[feature_columns].iloc[-60:].values.reshape(1, 60, len(feature_columns))
+            
+            # Make prediction for the current day
+            prediction = model.predict(last_data)
+            
+            # Append the ticker and its predicted change to the list
+            predictions.append((ticker, prediction[0][0]))
+
+        except Exception as e:
+            print(f"Skipping {ticker} due to an error: {e}")
+    
+    # Sort predictions by predicted price change in descending order and get the top 5
+    predictions.sort(key=lambda x: x[1], reverse=True)
+    top_5_predictions = predictions[:5]
+
+    return top_5_predictions
 
 # Run the Flask app
 if __name__ == '__main__':
