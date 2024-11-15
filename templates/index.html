@@ -35,6 +35,13 @@
             {% endif %}
         </div>
 
+        <!-- Typing Indicator in a Box (Positioned Below) -->
+        <div class="chat-response typing-box" id="typingIndicator" style="display: none;">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
         <!-- User Input Form -->
         <form method="POST" class="user-input-form" id="chatForm">
             <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
@@ -54,25 +61,32 @@
         const chatForm = document.getElementById('chatForm');
         const chatbox = document.getElementById('chatbox');
         const chatArea = document.querySelector('.chat-area');
-    
+        const typingIndicator = document.getElementById('typingIndicator');
+
         slider.addEventListener('input', function () {
             sliderValue.textContent = slider.value;
             riskToleranceInput.value = slider.value;
         });
-    
+
         chatForm.addEventListener('submit', async function (event) {
             event.preventDefault();
-    
+
             const userInput = chatbox.value.trim();
             if (userInput) {
+                // Create and append user message bubble
                 const userMessage = document.createElement('div');
                 userMessage.classList.add('user-message');
                 userMessage.textContent = userInput;
                 chatArea.appendChild(userMessage);
+
+                // Clear the input box
                 chatbox.value = '';
-    
-                // Fetch the response from the server
+
+                // Show typing indicator in a box
+                typingIndicator.style.display = 'flex';
+
                 try {
+                    // Fetch the response from the server
                     const response = await fetch('/', {
                         method: 'POST',
                         headers: {
@@ -83,17 +97,21 @@
                             risk_tolerance: riskToleranceInput.value
                         })
                     });
-    
+
                     const text = await response.text();
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(text, 'text/html');
                     const chatResponse = doc.querySelector('.chat-response');
-    
+
+                    // Hide typing indicator
+                    typingIndicator.style.display = 'none';
+
                     if (chatResponse) {
                         chatArea.appendChild(chatResponse);
                     }
                 } catch (error) {
                     console.error('Error:', error);
+                    typingIndicator.style.display = 'none'; // Hide typing indicator on error
                 }
             }
         });
