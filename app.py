@@ -92,6 +92,17 @@ def print_candles(df):
     fig.update_layout(width=1200, height=800)
     fig.show()
 
+def build_and_train_model(X_train, y_train):
+    model = Sequential([
+        LSTM(64, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),
+        BatchNormalization(),
+        LSTM(32),
+        Dense(1)  # Regression output
+    ])
+    model.compile(optimizer='adam', loss='mse')
+    model.fit(X_train, y_train, epochs=50, batch_size=16, validation_split=0.2)
+    return model
+
 # Run the Flask app
 if __name__ == '__main__':
     app.run(debug=True)
