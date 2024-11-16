@@ -99,17 +99,17 @@ import pandas_ta as ta
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
+from tensorflow.keras.layers import LSTM, Dense, BatchNormalization
 
-def import_data(stock, startDate, timeframe):
-    data = yf.download(stock, start=startDate, interval='1d')
+def import_data(stock, timeframe):
+    data = yf.download(stock, period="2y", interval='1d')
     data.columns = data.columns.get_level_values(0)
     data['EMA_50'] = ta.ema(data['Close'], length=50)
     data['EMA_200'] = ta.ema(data['Close'], length=200)
     data['SMA_50'] = ta.sma(data['Close'], length=50)
     data['SMA_200'] = ta.sma(data['Close'], length=200)
     data['RSI'] = ta.rsi(data['Close'], length=14)
-    data['Pct_Change'] = data['Close'].pct_change(periods=timeframe).shift(-timeframe)  # Percent change over 5 days
+    data['Pct_Change'] = data['Close'].pct_change(periods=timeframe).shift(-timeframe)  # Percent change over X days
     data.dropna(inplace=True)  # Remove any rows with NaN values
     return data
 
@@ -121,7 +121,7 @@ def prepare_lstm_data(data, feature_columns, target_column, time_steps=60):
         Y.append(data[target_column].iloc[i])
     return np.array(X), np.array(Y)
 
-def build_training_data(TICKERS):
+def build_training_data(tickers, timeframe):
     # sp500_url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
     # sp500_table = pd.read_html(sp500_url)
     # TICKERS = sp500_table[0]['Symbol'].tolist()
@@ -138,25 +138,29 @@ def build_training_data(TICKERS):
     time_steps = 60  # Number of time steps for LSTM
     scaler = MinMaxScaler()
 
-    for ticker in TICKERS:
+    for ticker in tickers:
         # print(f"Processing {ticker}...")
         try:
-            data = import_data(ticker, startDate='2023-01-01')
+            data = import_data(ticker, timeframe)
             data[feature_columns] = scaler.fit_transform(data[feature_columns])
             X, Y = prepare_lstm_data(data, feature_columns, 'Pct_Change', time_steps)
             if len(X) > 0 and len(Y) > 0:
-                length = len(X)
-                index = 0.8*length
-                X_train.extend(X[:index])
-                Y_train.extend(Y[:index])
-                X_test.extend(X[index:])
-                Y_test.extend(Y[index:])
+                # length = len(X)
+                # index = 0.8*length
+                # X_train.extend(X[:index])
+                # Y_train.extend(Y[:index])
+                # X_test.extend(X[index:])
+                # Y_test.extend(Y[index:])
+                X_train.extend(X)
+                Y_train.extend(Y)
 
         except Exception as e:
             print(f"Skipping {ticker} due to an error: {e}")
 
     X_train = np.array(X_train)
     Y_train = np.array(Y_train)
+
+    return X_train, Y_train
 
 def build_and_train_model(X_train, y_train):
     model = Sequential([
@@ -169,12 +173,13 @@ def build_and_train_model(X_train, y_train):
     model.fit(X_train, y_train, epochs=50, batch_size=16, validation_split=0.2)
     return model
 
-def predict_and_decide(tickers, buy):
+def predict_and_decide(tickers, tf, buy):
     # Ensure tickers is a numpy array
     tickers = np.array(tickers)
+    timeframe = tf
     
     # Prepare training data
-    X_train, y_train = build_training_data(tickers)
+    X_train, y_train = build_training_data(tickers, timeframe)
     
     # Check if training data is prepared
     if len(X_train) == 0 or len(y_train) == 0:
@@ -185,7 +190,31 @@ def predict_and_decide(tickers, buy):
     model = build_and_train_model(X_train, y_train)
 
     # Initialize a list to store the results
+    feature_columns = ['Close', 'EMA_50', 'EMA_200', 'SMA_50', 'SMA_200', 'RSI']
+    time_steps = 60
+    scaler = MinMaxScaler()
     predictions = []
+
+    for ticker in tickers:
+        try:
+            # Download the latest data for the ticker
+            data = import_data(ticker, timeframe)
+            
+            # Scale feature columns
+            data[feature_columns] = scaler.fit_transform(data[feature_columns])
+            
+            # Extract the last `time_steps` rows for prediction
+            if len(data) >= time_steps:
+                last_data = data[feature_columns].iloc[-time_steps:].values
+                last_data = np.expand_dims(last_data, axis=0)  # Reshape for LSTM input
+                
+                # Make a prediction
+                predicted_change = model.predict(last_data)[0][0]
+                predictions.append((ticker, predicted_change))
+            else:
+                print(f"Not enough data for {ticker} to make a prediction.")
+        except Exception as e:
+            print(f"Skipping {ticker} due to an error: {e}")
 
     # Sort predictions by predicted price change in descending order
     predictions.sort(key=lambda x: x[1], reverse=True)
