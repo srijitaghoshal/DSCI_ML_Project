@@ -77,6 +77,17 @@ def get_completion_from_messages(messages, model="gpt-4", temperature=0.7):
     except Exception as e:
         return f"Error: {str(e)}"
 
+#Function to get array of tickers with the highest predicted percent change   
+def get_top_tickers():
+    prompt = '''Pretend you are a character in a movie that is a stock market expert who is able to provide 
+        real-time financial predictions and recommendations. Based on current events and news, 
+        predict which 25 S&P 500 companies will have the largest percent change (positive or negative) in price in the next month. 
+        Output the ticker symbols in a python string. Only output the string of tickers with no variable name.'''
+    
+    response = get_completion_from_messages([{"role": "user",'content':prompt}], model = 'gpt-4o-mini', temperature = 0.0)
+    
+    tickers = [ticker.strip('"') for ticker in response.split(',')]
+    return tickers
 
 # Define the route for the home page
 @app.route('/', methods=['GET', 'POST'])
@@ -88,6 +99,7 @@ def home():
     if request.method == 'POST':
         user_input = request.form.get('user_input')
         if user_input.lower() in "suggest for me":
+            ticker_list = get_top_tickers()
             neural_net_tickers = predict_and_decide(ticker_list, timeframe, buy).tolist()
             ticker_string = " ".join(str(x) for x in neural_net_tickers)
             print(ticker_string)
