@@ -25,28 +25,7 @@
                 <option value="6mos">6 Months</option>
             </select>
         </div>
-        <div class="buyorsell">
-            <h1> Are you looking to buy or sell?</h1>
-            <label for="labelforbuysell">Buy</label>
-            <input type="radio" checked="checked" id="buy" name="transaction" value="buy">
 
-            <label for="labelforbuysell">Sell</label>
-            <input type="radio" id="sell" name="transaction" value="sell">
-        </div>
-
-        <div class="suggestforme">
-            <p> If you are having trouble finding stocks to ask about. Type "Suggest For Me" in the box below and our neural net will give some suggestions!</p>
-        </div>
-
-        <!-- Chat Area for Messages -->
-        <div class="chat-area">
-            <!-- User Messages -->
-            {% if chat_response %}
-                <div class="chat-response">
-                    <p>{{ chat_response | safe }}</p> <!-- Use the 'safe' filter here -->
-                </div>
-            {% endif %}
-        </div>
 
         <!-- User Input Form -->
         <form method="POST" class="user-input-form" id="chatForm">
@@ -54,6 +33,28 @@
                 <input type="checkbox" id="suggest-checkbox" name="suggest_for_me" class="styled-checkbox">
                 <label for="suggest-checkbox" class="checkbox-label">Suggest Stocks for me!</label>
             </div> -->
+            <div class="buyorsell">
+                <h1> Are you looking to buy or sell?</h1>
+                <label for="labelforbuysell">Buy</label>
+                <input type="radio" checked="checked" id="buy" name="transaction" value="buy">
+    
+                <label for="labelforbuysell">Sell</label>
+                <input type="radio" id="sell" name="transaction" value="sell">
+            </div>
+    
+            <div class="suggestforme">
+                <p> If you are having trouble finding stocks to ask about. Type "Suggest For Me" in the box below and our neural net will give some suggestions!</p>
+            </div>
+
+            <!-- Chat Area for Messages -->
+            <div class="chat-area">
+                <!-- User Messages -->
+                {% if chat_response %}
+                    <div class="chat-response">
+                        <p>{{ chat_response | safe }}</p> <!-- Use the 'safe' filter here -->
+                    </div>
+                {% endif %}
+            </div>
 
             <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
             <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">

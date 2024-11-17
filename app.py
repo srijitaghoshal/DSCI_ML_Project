@@ -35,12 +35,9 @@ neural_net_tickers = []
 # graph_suggestions = True
 
 # Time frame for investment length
-# PLACEHOLDER FOR NOW
-# TODO: NEED TO UPDATE TIME FRAME FROM FORM
 timeframe = 7 # SET TO A WEEK FOR NOW
 
-# PLACEHOLDER FOR TRANSACTION
-# 0 sell, 1 buy
+# Transaction type
 buy = 1
 
 # Function to add messages to the context
@@ -98,6 +95,12 @@ def home():
     # graphs = []
     if request.method == 'POST':
         user_input = request.form.get('user_input')
+        transaction_type = request.form.get('transaction')
+        if transaction_type == 'buy':
+            buy = True
+        else:
+            buy = False
+
         if user_input.lower() in "suggest for me":
             ticker_list = get_top_tickers()
             neural_net_tickers = predict_and_decide(ticker_list, timeframe, buy).tolist()
@@ -120,7 +123,7 @@ def home():
         if chat_response is None:
             risk_tolerance = request.form.get('risk_tolerance', 5)  # Default to 5 if not provided
             length_of_investment = request.form.get('length')
-            transaction_type = request.form.get('transaction')
+            # transaction_type = request.form.get('transaction')
             # Add user input and risk tolerance to context (if necessary)
             if user_input:
                 add_to_context(f"Risk Tolerance: {risk_tolerance}, Seeking length of investment: {length_of_investment}, User choice to buy or sell: {transaction_type}", "system")  
