@@ -6,6 +6,7 @@
     <title>TradesyAI</title>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -27,10 +28,14 @@
         <div class="buyorsell">
             <h1> Are you looking to buy or sell?</h1>
             <label for="labelforbuysell">Buy</label>
-            <input type="radio" id="buy" name="transaction" value="buy">
+            <input type="radio" checked="checked" id="buy" name="transaction" value="buy">
 
             <label for="labelforbuysell">Sell</label>
             <input type="radio" id="sell" name="transaction" value="sell">
+        </div>
+
+        <div class="suggestforme">
+            <p> If you are having trouble finding stocks to ask about. Type "Suggest For Me" in the box below and our neural net will give some suggestions!</p>
         </div>
 
         <!-- Chat Area for Messages -->
@@ -45,22 +50,37 @@
 
         <!-- User Input Form -->
         <form method="POST" class="user-input-form" id="chatForm">
+            <!-- <div class="checkbox-container">
+                <input type="checkbox" id="suggest-checkbox" name="suggest_for_me" class="styled-checkbox">
+                <label for="suggest-checkbox" class="checkbox-label">Suggest Stocks for me!</label>
+            </div> -->
+
             <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
             <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
-            <button type="submit" name="chat" value="submit" >Submit</button>
-            <!-- <button type="submit" name="graph" value="graph"> Graph Suggestions For Me</button> -->
+            <button type="submit" name="action" value="submit" >Submit</button>
+            <!-- <button type="submit" name="submit_button" value="graph"> Graph Suggestions For Me</button> -->
         </form>
 
+        <!-- User Graph Form -->
+        <!-- <form method="POST" class="graph-form" id="graphForm">
+            <input type="text" id="ticker" name="tickerform"><br><br>
+            <button type="submit" name="submit_button" value="graph"> Graph Suggestions For Me</button>
+        </form> -->
+
         <!-- Embed Plotly Graph -->
-        <div id="graphs-container">
+        <!-- <div id="graphs-container">
             {% for graph in graphs %}
-                <div class="graph-container">
-                    <h2>{{ graph.ticker }} - Stock Candlestick Chart</h2>
+                <div id="graph-{{ ticker }}" class="graph-container">
+                    <h2>{{ graph.ticker }} - Stock Candlestick Chart</h2> -->
                     <!-- Embed Plotly Graph -->
-                    {{ graph.graph_html | safe }}
+                    <!-- {{ graph.graph_html | safe }}
                 </div>
             {% endfor %}
-        </div>
+        </div> -->
+        <!-- <div class="ticker_suggestions">
+            <h3>Our Tuned Neural Net Suggestions to Get You Started</h3>
+            <p>{{ suggested_tickers }}</p>    
+        </div> -->
 
     </div>
     <footer class="footer">
@@ -118,6 +138,21 @@
                 }
             }
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('suggest-checkbox');
+        const hiddenField = document.getElementById('hidden-suggest-checkbox');
+
+        // Update hidden field value based on checkbox state
+        checkbox.addEventListener('change', function() {
+            if (checkbox.checked) {
+                hiddenField.value = 'checked';
+            } else {
+                hiddenField.value = 'unchecked';
+            }
+        });
+    });
+    
     </script>
 </body>
 </html>

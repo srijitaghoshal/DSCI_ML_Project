@@ -32,7 +32,7 @@ ticker_list = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'SPY', '
 # Neural net recommended ticker_list
 neural_net_tickers = []
 
-graph_suggestions = True
+# graph_suggestions = True
 
 # Time frame for investment length
 # PLACEHOLDER FOR NOW
@@ -82,37 +82,45 @@ def get_completion_from_messages(messages, model="gpt-4", temperature=0.7):
 @app.route('/', methods=['GET', 'POST'])
 def home():
     chat_response = None  # Default response if none is received
-    graphs = []
-    # if request.method == 'POST':
-    #     if 'graph' in request.form:  # 'graph' is the name of the button
-    #         if request.form['graph'] == 'graph': 
-    #             neural_net_tickers = predict_and_decide(ticker_list, timeframe, buy)
-    #             for ticker in neural_net_tickers:
-    #                 data = import_data(ticker, timeframe)
-    #                 if data is not None:
-    #                     graph_html = print_candles(data)
-    #                     graphs.append({"ticker": ticker, "graph_html": graph_html})
+    ticker_string = "No suggestions generated yet"
+    suggest_for_me = False  
+    # graphs = []
+    if request.method == 'POST':
+        user_input = request.form.get('user_input')
+        if user_input.lower() in "suggest for me":
+            neural_net_tickers = predict_and_decide(ticker_list, timeframe, buy).tolist()
+            ticker_string = " ".join(str(x) for x in neural_net_tickers)
+            print(ticker_string)
+            chat_response = f"Here is our tuned neural net generated suggestion: {ticker_string}"
+            add_to_context(chat_response, "system")
+
+            # print(neural_net_tickers)
+            # for ticker in neural_net_tickers:
+            #     data = import_data(ticker, timeframe)
+            #     if data is not None:
+            #         graph_html = print_candles(data)
+            #         graphs.append({"ticker": ticker, "graph_html": graph_html})
 
         # if 'chat' in request.form:  # 'chat' is the name of the button
         #     if request.form['chat'] == 'submit':
-    # print("Here!")
-    user_input = request.form.get('user_input')
-    risk_tolerance = request.form.get('risk_tolerance', 5)  # Default to 5 if not provided
-    length_of_investment = request.form.get('length')
-    transaction_type = request.form.get('transaction')
 
-    # Add user input and risk tolerance to context (if necessary)
-    if user_input:
-        add_to_context(f"Risk Tolerance: {risk_tolerance}, Seeking length of investment: {length_of_investment}, User choice to buy or sell: {transaction_type}", "system")  
-        add_to_context(user_input, "user")
+        # if request.form['action'] == 'submit':
+        if chat_response is None:
+            risk_tolerance = request.form.get('risk_tolerance', 5)  # Default to 5 if not provided
+            length_of_investment = request.form.get('length')
+            transaction_type = request.form.get('transaction')
+            # Add user input and risk tolerance to context (if necessary)
+            if user_input:
+                add_to_context(f"Risk Tolerance: {risk_tolerance}, Seeking length of investment: {length_of_investment}, User choice to buy or sell: {transaction_type}", "system")  
+                add_to_context(user_input, "user")
 
-        # Get response from OpenAI's GPT model based on the conversation context
-        chat_response = get_completion_from_messages(messages, model="gpt-4")
+                # Get response from OpenAI's GPT model based on the conversation context
+                chat_response = get_completion_from_messages(messages, model="gpt-4")
 
-        # Add the model's response to the context
-        add_to_context(chat_response, "assistant")
+                # Add the model's response to the context
+                add_to_context(chat_response, "assistant")
 
-    return render_template('index.html', chat_response=chat_response, graphs=graphs)
+    return render_template('index.html', chat_response=chat_response)
 
 # Plotting function for candlestick patterns
 def print_candles(df):
@@ -203,7 +211,7 @@ def build_and_train_model(X_train, y_train):
     ])
     model.compile(optimizer='adam', loss='mse')
     # TODO: Change epochs to 20 to optimize for testing, originally 50
-    model.fit(X_train, y_train, epochs=20, batch_size=16, validation_split=0.2)
+    model.fit(X_train, y_train, epochs=5, batch_size=16, validation_split=0.2)
     return model
 
 def predict_and_decide(tickers, tf, buy):
