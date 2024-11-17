@@ -137,13 +137,23 @@ def home():
 
     return render_template('index.html', chat_response=chat_response)
 
+# Route to the second page (second_page.html)
+@app.route('/graph', methods=['GET', 'POST'])
+def graphing():
+    graph_html = None
+    user_input = request.form.get('user_input')
+    if user_input:
+        data = import_data(user_input, timeframe)
+        if data is not None:
+            graph_html = print_candles(data, user_input)
+    return render_template('graph.html', graph=graph_html)  # Renders the second page
+
 # Plotting function for candlestick patterns
-def print_candles(df):
+def print_candles(df, ticker):
     # Create a figure with two rows for subplots
     fig = make_subplots(rows=1, cols=1, shared_xaxes=True, 
                         vertical_spacing=0.3, 
-                        row_heights=[0.7],
-                        subplot_titles=("Candlestick Chart"))
+                        row_heights=[0.7])
 
     # Candlestick chart
     fig.add_trace(go.Candlestick(x=df.index,
@@ -153,7 +163,7 @@ def print_candles(df):
                                  close=df['Close']),
                   row=1, col=1)
     
-    fig.update_layout(width=1200, height=800)
+    fig.update_layout(width=800, height=800, title=ticker)
     return fig.to_html(full_html=False)
 
 def import_data(stock, timeframe):
