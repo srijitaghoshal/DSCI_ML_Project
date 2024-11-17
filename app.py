@@ -2,6 +2,15 @@ from flask import Flask, render_template, request
 import os
 import openai 
 from dotenv import load_dotenv, find_dotenv
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import pandas as pd
+import yfinance as yf
+import pandas_ta as ta
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, BatchNormalization
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -57,10 +66,13 @@ def home():
         # Get the user input and slider value
         user_input = request.form.get('user_input')
         risk_tolerance = request.form.get('risk_tolerance', 5)  # Default to 5 if not provided
+        length_of_investment = request.form.get('length')
+        transaction_type = request.form.get('transaction')
+        
 
         # Add user input and risk tolerance to context (if necessary)
         if user_input:
-            add_to_context(f"Risk Tolerance: {risk_tolerance}", "system")  # Add risk tolerance to context (optional)
+            add_to_context(f"Risk Tolerance: {risk_tolerance}, Seeking length of investment: {length_of_investment}, User choice to buy or sell: {transaction_type}", "system")  
             add_to_context(user_input, "user")
 
             # Get response from OpenAI's GPT model based on the conversation context
@@ -72,9 +84,6 @@ def home():
     return render_template('index.html', chat_response=chat_response)
 
 # Plotting function for candlestick patterns
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-
 def print_candles(df):
     # Create a figure with two rows for subplots
     fig = make_subplots(rows=1, cols=1, shared_xaxes=True, 
@@ -92,14 +101,6 @@ def print_candles(df):
     
     fig.update_layout(width=1200, height=800)
     fig.show()
-
-import pandas as pd
-import yfinance as yf
-import pandas_ta as ta
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, BatchNormalization
 
 def import_data(stock, timeframe):
     data = yf.download(stock, period="2y", interval='1d')
@@ -233,4 +234,6 @@ def predict_and_decide(tickers, tf, buy):
     
 # Run the Flask app
 if __name__ == '__main__':
+    # default tickers returned by chatgpt
+    #predict_and_decide(tickers, tf, buy)
     app.run(debug=True)

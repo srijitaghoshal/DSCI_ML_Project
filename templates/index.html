@@ -11,18 +11,26 @@
     <div class="container">
         <h1>TradesyAI</h1>
         <div class="slidecontainer">
-            <h3>Risk Tolerance:</h3>
+            <h3>Enter Your Risk Tolerance For Investing:</h3>
             <span id="sliderValue">5</span>
             <input type="range" min="1" max="10" value="5" class="slider" id="sldr" name="risk_tolerance">
         </div>
         <div class="lengthofinvestment">
-            <label for="investmentlength">Choose a timeframe:</label>
+            <label for="investmentlength">Choose a timeframe for the length of your investment:</label>
             <select name="length" id="length">
                 <option value="day">1 Day</option>
                 <option value="week">1 Week</option>
                 <option value="1mos">1 Month</option>
                 <option value="6mos">6 Months</option>
             </select>
+        </div>
+        <div class="buyorsell">
+            <h1> Are you looking to buy or sell?</h1>
+            <label for="labelforbuysell">Buy</label>
+            <input type="radio" id="buy" name="transaction" value="buy">
+
+            <label for="labelforbuysell">Sell</label>
+            <input type="radio" id="sell" name="transaction" value="sell">
         </div>
 
         <!-- Chat Area for Messages -->
