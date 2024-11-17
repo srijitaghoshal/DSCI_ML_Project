@@ -47,8 +47,21 @@
         <form method="POST" class="user-input-form" id="chatForm">
             <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
             <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
-            <button type="submit">Submit</button>
+            <button type="submit" name="chat" value="submit" >Submit</button>
+            <!-- <button type="submit" name="graph" value="graph"> Graph Suggestions For Me</button> -->
         </form>
+
+        <!-- Embed Plotly Graph -->
+        <div id="graphs-container">
+            {% for graph in graphs %}
+                <div class="graph-container">
+                    <h2>{{ graph.ticker }} - Stock Candlestick Chart</h2>
+                    <!-- Embed Plotly Graph -->
+                    {{ graph.graph_html | safe }}
+                </div>
+            {% endfor %}
+        </div>
+
     </div>
     <footer class="footer">
         © 2024 <a href="#">TradesyAI</a>. All rights reserved.
