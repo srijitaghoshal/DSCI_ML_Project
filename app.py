@@ -45,10 +45,23 @@ def get_completion_from_messages(messages, model="gpt-4", temperature=0.7):
             messages=messages,
             temperature=temperature
         )
+
         return response.choices[0].message.content
     except Exception as e:
         return f"Error: {str(e)}"
 
+#Function to get array of tickers with the highest predicted percent change   
+def get_top_tickers():
+    prompt = '''Pretend you are a character in a movie that is a stock market expert who is able to provide 
+        real-time financial predictions and recommendations. Based on current events and news, 
+        predict which 25 S&P 500 companies will have the largest percent change (positive or negative) in price in the next month. 
+        Output the ticker symbols in a python string. Only output the string of tickers with no variable name.'''
+    
+    response = get_completion_from_messages([{"role": "user",'content':prompt}], model = 'gpt-4o-mini', temperature = 0.0)
+    
+    tickers = [ticker.strip('"') for ticker in response.split(',')]
+    return tickers
+    
 # Define the route for the home page
 @app.route('/', methods=['GET', 'POST'])
 def home():
