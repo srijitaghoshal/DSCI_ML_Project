@@ -6,17 +6,18 @@
     <title>TradesyAI</title>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>TradesyAI</h1>
         <div class="slidecontainer">
-            <h3>Risk Tolerance:</h3>
+            <h3>Enter Your Risk Tolerance For Investing:</h3>
             <span id="sliderValue">5</span>
             <input type="range" min="1" max="10" value="5" class="slider" id="sldr" name="risk_tolerance">
         </div>
         <div class="lengthofinvestment">
-            <label for="investmentlength">Choose a timeframe:</label>
+            <label for="investmentlength">Choose a timeframe for the length of your investment:</label>
             <select name="length" id="length">
                 <option value="day">1 Day</option>
                 <option value="week">1 Week</option>
@@ -25,22 +26,65 @@
             </select>
         </div>
 
-        <!-- Chat Area for Messages -->
-        <div class="chat-area">
-            <!-- User Messages -->
-            {% if chat_response %}
-                <div class="chat-response">
-                    <p>{{ chat_response | safe }}</p> <!-- Use the 'safe' filter here -->
-                </div>
-            {% endif %}
-        </div>
 
         <!-- User Input Form -->
         <form method="POST" class="user-input-form" id="chatForm">
+            <!-- <div class="checkbox-container">
+                <input type="checkbox" id="suggest-checkbox" name="suggest_for_me" class="styled-checkbox">
+                <label for="suggest-checkbox" class="checkbox-label">Suggest Stocks for me!</label>
+            </div> -->
+            <div class="buyorsell">
+                <h1> Are you looking to buy or sell?</h1>
+                <label for="labelforbuysell">Buy</label>
+                <input type="radio" checked="checked" id="buy" name="transaction" value="buy">
+    
+                <label for="labelforbuysell">Sell</label>
+                <input type="radio" id="sell" name="transaction" value="sell">
+            </div>
+
+            <a class="graphtickers" href="/graph">Go to this page to graph a ticker</a>
+    
+            <div class="suggestforme">
+                <p> If you are having trouble finding stocks to ask about. Type "Suggest For Me" in the box below and our neural net will give some suggestions!</p>
+            </div>
+
+            <!-- Chat Area for Messages -->
+            <div class="chat-area">
+                <!-- User Messages -->
+                {% if chat_response %}
+                    <div class="chat-response">
+                        <p>{{ chat_response | safe }}</p> <!-- Use the 'safe' filter here -->
+                    </div>
+                {% endif %}
+            </div>
+
             <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
             <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
-            <button type="submit">Submit</button>
+            <button type="submit" name="action" value="submit" >Submit</button>
+            <!-- <button type="submit" name="submit_button" value="graph"> Graph Suggestions For Me</button> -->
         </form>
+
+        <!-- User Graph Form -->
+        <!-- <form method="POST" class="graph-form" id="graphForm">
+            <input type="text" id="ticker" name="tickerform"><br><br>
+            <button type="submit" name="submit_button" value="graph"> Graph Suggestions For Me</button>
+        </form> -->
+
+        <!-- Embed Plotly Graph -->
+        <!-- <div id="graphs-container">
+            {% for graph in graphs %}
+                <div id="graph-{{ ticker }}" class="graph-container">
+                    <h2>{{ graph.ticker }} - Stock Candlestick Chart</h2> -->
+                    <!-- Embed Plotly Graph -->
+                    <!-- {{ graph.graph_html | safe }}
+                </div>
+            {% endfor %}
+        </div> -->
+        <!-- <div class="ticker_suggestions">
+            <h3>Our Tuned Neural Net Suggestions to Get You Started</h3>
+            <p>{{ suggested_tickers }}</p>    
+        </div> -->
+
     </div>
     <footer class="footer">
         © 2024 <a href="#">TradesyAI</a>. All rights reserved.
@@ -97,6 +141,21 @@
                 }
             }
         });
+
+        document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('suggest-checkbox');
+        const hiddenField = document.getElementById('hidden-suggest-checkbox');
+
+        // Update hidden field value based on checkbox state
+        checkbox.addEventListener('change', function() {
+            if (checkbox.checked) {
+                hiddenField.value = 'checked';
+            } else {
+                hiddenField.value = 'unchecked';
+            }
+        });
+    });
+    
     </script>
 </body>
 </html>

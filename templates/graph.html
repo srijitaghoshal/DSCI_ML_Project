@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph a Ticker</title>
+    <style>
+        /* General Body Styling */
+        body {
+            font-family: 'Raleway', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f8f9fa, #e8eaf6);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between; /* Ensure footer stays at the bottom */
+            color: #333;
+        }
+
+        /* Main Container */
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Header Styling */
+        h1 {
+            font-size: 2.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        /* Form Styling */
+        .user-input-form {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* Form Elements */
+        label {
+            font-size: 1.2rem;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            font-family: 'Raleway', sans-serif;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #5c6bc0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #3949ab;
+        }
+
+        /* Graph Container Styling */
+        .graphhtml {
+            margin-top: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Link Styling */
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 16px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer Styling */
+        .footer {
+            text-align: center;
+            padding: 10px;
+            background-color: #3949ab;
+            color: white;
+            width: 100%;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: auto; /* Keep footer at the bottom */
+        }
+
+        .footer a {
+            color: #b3c0f7;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Content Area -->
+    <div class="container">
+        <h1>Graph a Ticker</h1>
+
+        <!-- Form with input field and submit button -->
+        <form class="user-input-form" method="POST">
+            <label for="user_input">Ticker:</label>
+            <input type="text" id="user_input" name="user_input" placeholder="Enter stock ticker" required>
+            <button type="submit">Submit</button>
+        </form>
+
+        <div>
+            {% if graph %}
+                <div class="graphhtml">
+                    {{ graph | safe }} <!-- Display graph if available -->
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Link to Home Page -->
+        <br>
+        <a href="/">Go back to the home page</a>
+    </div>
+
+    <!-- Footer Area -->
+    <div class="footer">
+        <p>&copy; 2024 TradesyAI. All Rights Reserved. </p>
+    </div>
+
+</body>
+</html>

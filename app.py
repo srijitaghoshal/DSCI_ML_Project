@@ -1,7 +1,16 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, render_template_string
 import os
 import openai 
 from dotenv import load_dotenv, find_dotenv
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import pandas as pd
+import yfinance as yf
+import pandas_ta as ta
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, BatchNormalization
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -14,6 +23,22 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 # Define a list to store conversation context
 messages = []  # This will hold the conversation context for ChatGPT
+
+# Ticker List for User Context
+# PLACEHOLDER FOR NOW
+ticker_list = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'TSLA', 'META', 'NVDA', 'SPY', 'V', 'BABA']
+
+
+# Neural net recommended ticker_list
+neural_net_tickers = []
+
+# graph_suggestions = True
+
+# Time frame for investment length
+timeframe = 7 # SET TO A WEEK FOR NOW
+
+# Transaction type
+buy = 1
 
 # Function to add messages to the context
 def add_to_context(message, role):
@@ -61,39 +86,75 @@ def get_top_tickers():
     
     tickers = [ticker.strip('"') for ticker in response.split(',')]
     return tickers
-    
+
 # Define the route for the home page
 @app.route('/', methods=['GET', 'POST'])
 def home():
     chat_response = None  # Default response if none is received
+    ticker_string = "No suggestions generated yet"
+    suggest_for_me = False  
+    # graphs = []
     if request.method == 'POST':
-        # Get the user input and slider value
         user_input = request.form.get('user_input')
-        risk_tolerance = request.form.get('risk_tolerance', 5)  # Default to 5 if not provided
+        transaction_type = request.form.get('transaction')
+        if transaction_type == 'buy':
+            buy = True
+        else:
+            buy = False
 
-        # Add user input and risk tolerance to context (if necessary)
-        if user_input:
-            add_to_context(f"Risk Tolerance: {risk_tolerance}", "system")  # Add risk tolerance to context (optional)
-            add_to_context(user_input, "user")
+        if user_input.lower() in "suggest for me":
+            ticker_list = get_top_tickers()
+            neural_net_tickers = predict_and_decide(ticker_list, timeframe, buy).tolist()
+            ticker_string = " ".join(str(x) for x in neural_net_tickers)
+            print(ticker_string)
+            chat_response = f"Here is our tuned neural net generated suggestion: {ticker_string}"
+            add_to_context(chat_response, "system")
 
-            # Get response from OpenAI's GPT model based on the conversation context
-            chat_response = get_completion_from_messages(messages, model="gpt-4")
+            # print(neural_net_tickers)
+            # for ticker in neural_net_tickers:
+            #     data = import_data(ticker, timeframe)
+            #     if data is not None:
+            #         graph_html = print_candles(data)
+            #         graphs.append({"ticker": ticker, "graph_html": graph_html})
 
-            # Add the model's response to the context
-            add_to_context(chat_response, "assistant")
+        # if 'chat' in request.form:  # 'chat' is the name of the button
+        #     if request.form['chat'] == 'submit':
+
+        # if request.form['action'] == 'submit':
+        if chat_response is None:
+            risk_tolerance = request.form.get('risk_tolerance', 5)  # Default to 5 if not provided
+            length_of_investment = request.form.get('length')
+            # transaction_type = request.form.get('transaction')
+            # Add user input and risk tolerance to context (if necessary)
+            if user_input:
+                add_to_context(f"Risk Tolerance: {risk_tolerance}, Seeking length of investment: {length_of_investment}, User choice to buy or sell: {transaction_type}", "system")  
+                add_to_context(user_input, "user")
+
+                # Get response from OpenAI's GPT model based on the conversation context
+                chat_response = get_completion_from_messages(messages, model="gpt-4")
+
+                # Add the model's response to the context
+                add_to_context(chat_response, "assistant")
 
     return render_template('index.html', chat_response=chat_response)
 
-# Plotting function for candlestick patterns
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+# Route to the second page (second_page.html)
+@app.route('/graph', methods=['GET', 'POST'])
+def graphing():
+    graph_html = None
+    user_input = request.form.get('user_input')
+    if user_input:
+        data = import_data(user_input, timeframe)
+        if data is not None:
+            graph_html = print_candles(data, user_input)
+    return render_template('graph.html', graph=graph_html)  # Renders the second page
 
-def print_candles(df):
+# Plotting function for candlestick patterns
+def print_candles(df, ticker):
     # Create a figure with two rows for subplots
     fig = make_subplots(rows=1, cols=1, shared_xaxes=True, 
                         vertical_spacing=0.3, 
-                        row_heights=[0.7],
-                        subplot_titles=("Candlestick Chart"))
+                        row_heights=[0.7])
 
     # Candlestick chart
     fig.add_trace(go.Candlestick(x=df.index,
@@ -103,16 +164,8 @@ def print_candles(df):
                                  close=df['Close']),
                   row=1, col=1)
     
-    fig.update_layout(width=1200, height=800)
-    fig.show()
-
-import pandas as pd
-import yfinance as yf
-import pandas_ta as ta
-import numpy as np
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense, BatchNormalization
+    fig.update_layout(width=800, height=800, title=ticker)
+    return fig.to_html(full_html=False)
 
 def import_data(stock, timeframe):
     data = yf.download(stock, period="2y", interval='1d')
@@ -183,7 +236,8 @@ def build_and_train_model(X_train, y_train):
         Dense(1)  # Regression output
     ])
     model.compile(optimizer='adam', loss='mse')
-    model.fit(X_train, y_train, epochs=50, batch_size=16, validation_split=0.2)
+    # TODO: Change epochs to 20 to optimize for testing, originally 50
+    model.fit(X_train, y_train, epochs=5, batch_size=16, validation_split=0.2)
     return model
 
 def predict_and_decide(tickers, tf, buy):
@@ -246,4 +300,5 @@ def predict_and_decide(tickers, tf, buy):
     
 # Run the Flask app
 if __name__ == '__main__':
+
     app.run(debug=True)
