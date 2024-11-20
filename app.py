@@ -70,6 +70,7 @@ def get_completion_from_messages(messages, model="gpt-4", temperature=0.7):
             messages=messages,
             temperature=temperature
         )
+
         return response.choices[0].message.content
     except Exception as e:
         return f"Error: {str(e)}"
