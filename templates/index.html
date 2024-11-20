@@ -27,13 +27,6 @@
         </div>
 
 
-        <!-- Typing Indicator in a Box (Positioned Below) -->
-        <div class="chat-response typing-box" id="typingIndicator" style="display: none;">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>
-
         <!-- User Input Form -->
         <form method="POST" class="user-input-form" id="chatForm">
             <!-- <div class="checkbox-container">
@@ -63,8 +56,15 @@
                         <p>{{ chat_response | safe }}</p> <!-- Use the 'safe' filter here -->
                     </div>
                 {% endif %}
-            </div>
 
+                <!-- Typing Indicator in a Box (Positioned Below) -->
+
+            </div>
+            <div class="chat-response typing-box" id="typingIndicator" style="display: none;">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
             <textarea id="chatbox" name="user_input" placeholder="Ask TradesyAI..."></textarea>
             <input type="hidden" id="risk_tolerance_value" name="risk_tolerance" value="5">
             <button type="submit" name="action" value="submit" >Submit</button>
