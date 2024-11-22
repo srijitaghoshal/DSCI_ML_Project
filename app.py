@@ -64,6 +64,7 @@ def get_completion_from_messages(messages, model="gpt-4", temperature=0.7):
     Returns:
         str: The response content from the model.
     """
+    messages[0]['content'] += 'The response should be no more than 3 sentences.'
     try:
         response = openai.chat.completions.create(
             model=model,
@@ -82,10 +83,17 @@ def get_top_tickers():
         predict which 25 S&P 500 companies will have the largest percent change (positive or negative) in price in the next month. 
         Output the ticker symbols in a python string. Only output the string of tickers with no variable name.'''
     
-    response = get_completion_from_messages([{"role": "user",'content':prompt}], model = 'gpt-4o-mini', temperature = 0.0)
-    
-    tickers = [ticker.strip('"') for ticker in response.split(',')]
-    return tickers
+    try:
+        response = openai.chat.completions.create(
+            model= 'gpt-4o-mini',
+            messages=[{"role": "user",'content':prompt}],
+            temperature=0.0
+        )
+        response = response.choices[0].message.content
+        tickers = [ticker.strip('"') for ticker in response.split(',')]
+        return tickers
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 # Define the route for the home page
 @app.route('/', methods=['GET', 'POST'])
